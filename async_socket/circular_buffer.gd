@@ -8,6 +8,10 @@ var available_to_write: int:
     get: return _available_to_write
 var available_to_read: int:
     get: return _available_to_read
+var read_cursor: int:
+    get: return _read_cursor
+var write_cursor: int:
+    get: return _write_cursor
 
 var _buffer: PackedByteArray
 var _write_cursor: int
@@ -19,6 +23,7 @@ var _available_to_read: int
 func _init(capacity := 4096):
     _buffer = PackedByteArray()
     _buffer.resize(capacity)
+    _buffer.fill(0)
     _available_to_write = capacity
 
 
@@ -77,11 +82,14 @@ func read(length: int) -> Array:
 
 
 func clear() -> void:
-    _buffer.fill(0)
     _write_cursor = 0
     _read_cursor = 0
     _available_to_write = _buffer.size()
     _available_to_read = 0
+
+
+func find(value: int, from := 0) -> int:
+    return _buffer.find(value, from)
 
 
 func _copy(from: PackedByteArray, from_pos: int, to: PackedByteArray, to_pos: int, length: int) -> void:

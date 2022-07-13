@@ -12,16 +12,28 @@ _global_script_classes=[{
 "base": "RefCounted",
 "class": &"CircularBuffer",
 "language": &"GDScript",
-"path": "res://circular_buffer.gd"
+"path": "res://async_socket/circular_buffer.gd"
+}, {
+"base": "RefCounted",
+"class": &"Queue",
+"language": &"GDScript",
+"path": "res://async_socket/queue.gd"
 }, {
 "base": "RefCounted",
 "class": &"TcpClient",
 "language": &"GDScript",
-"path": "res://tcp_client.gd"
+"path": "res://async_socket/tcp_client.gd"
+}, {
+"base": "RefCounted",
+"class": &"TcpListener",
+"language": &"GDScript",
+"path": "res://async_socket/tcp_listener.gd"
 }]
 _global_script_class_icons={
 "CircularBuffer": "",
-"TcpClient": ""
+"Queue": "",
+"TcpClient": "",
+"TcpListener": ""
 }
 
 [application]
