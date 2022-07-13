@@ -60,7 +60,38 @@ func write(buff: PackedByteArray) -> int:
 func read(length: int) -> Array:
     if not can_read(length):
         return [FAILED]
+    return [OK, _raw_read(length)]
 
+
+func clear() -> void:
+    _buffer.fill(0)
+    _write_cursor = 0
+    _read_cursor = 0
+    _available_to_write = _buffer.size()
+    _available_to_read = 0
+
+
+func find_virtual_index(value: int) -> int:
+    var virtual_index := -1
+    var found := false
+
+    for i in _available_to_read:
+        virtual_index += 1
+        if peek(virtual_index) == value:
+            found = true
+            break
+
+    return virtual_index if found else -1
+
+
+func peek(virtual_index: int = 0) -> int:
+    virtual_index += _read_cursor
+    if virtual_index >= _buffer.size():
+        return _buffer[virtual_index - _buffer.size()]
+    return _buffer[virtual_index]
+
+
+func _raw_read(length: int) -> PackedByteArray:
     var result := PackedByteArray()
     result.resize(length)
 
@@ -78,18 +109,7 @@ func read(length: int) -> Array:
         _copy(_buffer, _read_cursor, result, 0, length)
         _advance_reader(length)
 
-    return [OK, result]
-
-
-func clear() -> void:
-    _write_cursor = 0
-    _read_cursor = 0
-    _available_to_write = _buffer.size()
-    _available_to_read = 0
-
-
-func find(value: int, from := 0) -> int:
-    return _buffer.find(value, from)
+    return result
 
 
 func _copy(from: PackedByteArray, from_pos: int, to: PackedByteArray, to_pos: int, length: int) -> void:

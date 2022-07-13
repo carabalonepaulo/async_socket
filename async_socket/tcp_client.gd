@@ -28,18 +28,16 @@ class ReceiveLineTask extends Task:
 
 
     func can_handle(buffer: CircularBuffer) -> bool:
-        _index = buffer.find(LF, buffer.read_cursor)
+        _index = buffer.find_virtual_index(LF)
         return _index != -1
 
 
     func handle(buffer: CircularBuffer) -> bool:
-        print("trying to handle")
-        var data := buffer.read(_index - buffer.read_cursor + 1)
+        var data := buffer.read(_index + 1)
         if data[0] != OK:
             return false
 
         ready.emit(data[1].get_string_from_ascii())
-        print("handled")
         return true
 
 
@@ -70,7 +68,7 @@ signal disconnected(client)
 
 const LF := 10
 
-var timeout: int = 0
+var timeout: int = -1
 
 var _connected: bool
 var _socket: StreamPeerTCP
@@ -153,7 +151,7 @@ func _refresh_status() -> void:
 
 func _try_receive() -> void:
     var available := _socket.get_available_bytes()
-    if available == 0:
+    if available <= 0:
         return
 
     var data := _socket.get_data(available)
@@ -171,9 +169,9 @@ func _try_handle_task() -> void:
         return
 
     var task: Task = _tasks.peek_first()
-    if timeout > 0 and task.elapsed_time > timeout:
-        disconnect_from_host()
-        return
+#    if timeout > 0 and task.elapsed_time > timeout:
+#        disconnect_from_host()
+#        return
 
     if task.can_handle(_buffer):
         if task.handle(_buffer):
