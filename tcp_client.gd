@@ -16,7 +16,6 @@ class Event extends RefCounted:
 
 
     func can_handle(_buffer: CircularBuffer, _new_buffer: PackedByteArray) -> bool:
-        print('base event')
         return false
 
 
@@ -73,6 +72,7 @@ const LF := 10
 
 var is_connected: bool:
     get: return _connected
+var read_timeout: int = 0
 
 var _connected: bool
 var _socket: StreamPeerTCP
@@ -128,8 +128,13 @@ func poll() -> void:
     if _buffer.write(data[1]) != OK:
         push_error("Too much data to write, buffer is too small.")
         _dispose_client()
+        return
 
     if _current_event == null:
+        return
+
+    if read_timeout > 0 and _current_event.elapsed_time > read_timeout:
+        _dispose_client()
         return
 
     if _current_event.can_handle(_buffer, data[1]):
@@ -163,7 +168,10 @@ func read(length: int) -> PackedByteArray:
 
 
 func _refresh_status() -> void:
-    _socket.poll()
+    if _socket.poll() != OK:
+        _dispose_client()
+        return
+
     if _socket.get_status() == StreamPeerTCP.STATUS_CONNECTED:
         _connected = true
         connected.emit(self)
