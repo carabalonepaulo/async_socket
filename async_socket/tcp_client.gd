@@ -70,6 +70,8 @@ signal disconnected(client)
 
 const LF := 10
 
+var timeout: int = 0
+
 var _connected: bool
 var _socket: StreamPeerTCP
 var _buffer: CircularBuffer
@@ -169,6 +171,10 @@ func _try_handle_task() -> void:
         return
 
     var task: Task = _tasks.peek_first()
+    if timeout > 0 and task.elapsed_time > timeout:
+        disconnect_from_host()
+        return
+
     if task.can_handle(_buffer):
         if task.handle(_buffer):
             _tasks.dequeue()
