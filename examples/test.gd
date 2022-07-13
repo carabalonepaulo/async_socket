@@ -26,7 +26,6 @@ func _handle_server() -> void:
 
 func _handle_client() -> void:
     _client = TcpClient.new()
-#    _client.read_timeout = 1
     _client.connect_to_host("127.0.0.1", 5000)
 
     await _client.connected
