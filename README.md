@@ -7,9 +7,7 @@ Single thread async socket support for Godot 4.
 - `disconnect_from_host()` - Yep, just like the other one.
 - `poll()` - It will refresh the connection status and receive data into the internal buffer.
 - `send(buffer: PackedByteArray) -> Error` - The same as `put_data` from `StreamPeer`
-- `send_line(text: String) -> Error` - It will automatically append a LF at the end of the `text`.
 - `recv(length: int) -> PackedByteArray` - Coroutine that yields when that amount of bytes is ready to be read.
-- `recv_line() -> String` - Coroutine that yields when a new line is available to be read.
 
 ## TcpListener
 - `start()` - Start listening.
@@ -27,8 +25,9 @@ func _handle_server() -> void:
     var client: TcpClient = await _server.accept()
     print("S> client connected")
 
-    client.send_line("<0>'e' n=Server</0>")
-    print("S> line sent")
+    var buff := "hello world".to_ascii_buffer()
+    print("S> %d bytes sent!" % buff.size())
+    client.send(buff)
 
     await get_tree().create_timer(1).timeout
     client.disconnect_from_host()
@@ -38,17 +37,16 @@ func _handle_server() -> void:
 ```gdscript
 func _handle_client() -> void:
     _client = TcpClient.new()
+    _client.timeout = 1
     _client.connect_to_host("127.0.0.1", 5000)
 
     await _client.connected
     print("C> connected")
 
-    _client.send_line("<0>'e'</0>")
+    var expected := "hello world".to_ascii_buffer()
+    var buff := await _client.recv(expected.size())
 
-    var line = await _client.recv_line()
-    while line != "":
-        print("C> '%s'" % line.replace('\n', ''))
-        line = await _client.recv_line()
+    print("C> %d bytes received: %s" % [buff.size(), buff.get_string_from_ascii()])
 
     await _client.disconnected
     print("C> disconnected")
