@@ -17,8 +17,9 @@ func _handle_server() -> void:
     var client: TcpClient = await _server.accept()
     print("S> client connected")
 
-    client.send_line("<0>'e' n=Server</0>")
-    print("S> line sent")
+    var buff := "hello world".to_ascii_buffer()
+    print("S> %d bytes sent!" % buff.size())
+    client.send(buff)
 
     await get_tree().create_timer(1).timeout
     client.disconnect_from_host()
@@ -32,12 +33,13 @@ func _handle_client() -> void:
     await _client.connected
     print("C> connected")
 
-    _client.send_line("<0>'e'</0>")
+    var expected := "hello world".to_ascii_buffer()
+    var result := await _client.recv(expected.size()) as Array
 
-    var line = await _client.recv_line()
-    while line != "":
-        print("C> '%s'" % line.replace('\n', ''))
-        line = await _client.recv_line()
+    if result[0] == OK:
+        print("C> %d bytes received: %s" % [result[1].size(), result[1].get_string_from_ascii()])
+    else:
+        push_error('Failed to receive message.')
 
     await _client.disconnected
     print("C> disconnected")
