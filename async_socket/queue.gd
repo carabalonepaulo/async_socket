@@ -59,7 +59,3 @@ func peek_first():
 ## Returns the last element of queue, but does not remove it from the queue.
 func peek_last():
     return _last[NEXT]
-
-
-func get_class() -> String:
-    return "Queue"

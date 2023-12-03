@@ -8,36 +8,8 @@
 
 config_version=5
 
-_global_script_classes=[{
-"base": "RefCounted",
-"class": &"CircularBuffer",
-"language": &"GDScript",
-"path": "res://async_socket/circular_buffer.gd"
-}, {
-"base": "RefCounted",
-"class": &"Queue",
-"language": &"GDScript",
-"path": "res://async_socket/queue.gd"
-}, {
-"base": "RefCounted",
-"class": &"TcpClient",
-"language": &"GDScript",
-"path": "res://async_socket/tcp_client.gd"
-}, {
-"base": "RefCounted",
-"class": &"TcpListener",
-"language": &"GDScript",
-"path": "res://async_socket/tcp_listener.gd"
-}]
-_global_script_class_icons={
-"CircularBuffer": "",
-"Queue": "",
-"TcpClient": "",
-"TcpListener": ""
-}
-
 [application]
 
 config/name="AsyncSocket"
-config/features=PackedStringArray("4.0", "Vulkan Clustered")
+config/features=PackedStringArray("4.2")
 config/icon="res://icon.png"
