@@ -37,12 +37,9 @@ var _socket: StreamPeerTCP
 var _current_task: ReceiveTask
 
 
-func _init(buffer_size := 4096):
-    pass
-
-
 func wrap_stream(stream: StreamPeerTCP) -> void:
     _socket = stream
+    _socket.set_no_delay(true)
     _connected = true
 
 
@@ -90,6 +87,9 @@ func send(buff: PackedByteArray) -> int:
 
 
 func recv(length: int) -> Array:
+    if _current_task != null:
+        return [FAILED]
+
     _current_task = ReceiveTask.new(length)
     return await _current_task.ready as Array
 
@@ -102,6 +102,7 @@ func _refresh_status() -> void:
         StreamPeerTCP.STATUS_CONNECTED:
             if not _connected:
                 _connected = true
+                _socket.set_no_delay(true)
                 connected.emit(self)
         StreamPeerTCP.STATUS_ERROR, StreamPeerTCP.STATUS_NONE:
             disconnect_from_host()

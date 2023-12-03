@@ -73,7 +73,7 @@ func accept() -> TcpClient:
     var client :=  await _current_event.ready as TcpClient
 
     var index := _clients.insert(client)
-    client.set_meta('id', index)
+    client.set_meta('conn_id', index)
 
     client.disconnected.connect(_on_client_disconnected)
     client_connected.emit(client)
@@ -82,6 +82,6 @@ func accept() -> TcpClient:
 
 
 func _on_client_disconnected(client: TcpClient) -> void:
-    var id := client.get_meta('id') as int
+    var id := client.get_meta('conn_id') as int
     _clients.remove(id)
     client_disconnected.emit(client)
