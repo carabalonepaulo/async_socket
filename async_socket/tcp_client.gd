@@ -53,13 +53,7 @@ func disconnect_from_host() -> void:
         return
 
     if _current_task != null:
-        if _current_task.can_handle(_socket):
-            _current_task.handle(_socket)
-        else:
-            _current_task.ready.emit(FAILED, PackedByteArray())
-
-        _current_task.free()
-        _current_task = null
+        _finalize_task(_socket if _current_task.can_handle(_socket) else null)
 
     _socket.disconnect_from_host()
     _socket = null
@@ -76,10 +70,11 @@ func poll() -> void:
     if not _connected:
         return
 
-    if _current_task and _current_task.can_handle(_socket):
-        _current_task.handle(_socket)
-        _current_task.free()
-        _current_task = null
+    if _current_task != null:
+        if _current_task.can_handle(_socket):
+            _finalize_task(_socket)
+        elif _current_task.elapsed_time >= timeout:
+            _finalize_task()
 
 
 func send(buff: PackedByteArray) -> int:
@@ -106,3 +101,13 @@ func _refresh_status() -> void:
                 connected.emit(self)
         StreamPeerTCP.STATUS_ERROR, StreamPeerTCP.STATUS_NONE:
             disconnect_from_host()
+
+
+func _finalize_task(socket: StreamPeerTCP = null) -> void:
+    if socket == null:
+        _current_task.ready.emit(FAILED, PackedByteArray())
+    else:
+        _current_task.handle(_socket)
+
+    _current_task.free()
+    _current_task = null
