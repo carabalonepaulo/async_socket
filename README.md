@@ -1,5 +1,5 @@
 # Asynchronous Socket
-Single thread async socket support for Godot 4.
+Single-threaded async socket support for Godot 4.2!
 
 ## TcpClient
 - `wrap_stream(stream: StreamPeerTCP)` - Upgrade a `StreamPeerTCP` to a async `TcpClient`.
@@ -22,7 +22,14 @@ func _handle_server() -> void:
     _server = TcpListener.new(5000)
     _server.start()
 
-    var client: TcpClient = await _server.accept()
+    var result := await _server.accept() as Array
+    if result[0] != OK:
+        push_error('Failed to accept connection.')
+        # TcpListener.accept can only fail if the server forcefully shuts down
+        # while an AcceptTask is still pending. So we can safely return here.
+        return
+
+    var client := result[1] as TcpClient
     print('S> client connected')
 
     var buff := 'hello world'.to_ascii_buffer()
@@ -54,3 +61,10 @@ func _handle_client() -> void:
     await _client.disconnected
     print('C> disconnected')
 ```
+
+
+## Important Note
+
+As it operates on the main thread, the poll/dispatch is linked to the FPS. If your client runs at 30 FPS, it can only handle 30 tasks (or receive 30 packets).
+
+The most effective solution is to run the server/client on a separate thread. However, this requires a secure means of interaction. One practical option is to use a ConcurrentQueue, where events (e.g., [CLIENT_CONNECTED, id]) can be enqueued from the background thread and dequeued on the main thread.

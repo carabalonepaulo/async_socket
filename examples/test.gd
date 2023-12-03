@@ -14,7 +14,14 @@ func _handle_server() -> void:
     _server = TcpListener.new(5000)
     _server.start()
 
-    var client: TcpClient = await _server.accept()
+    var result := await _server.accept() as Array
+    if result[0] != OK:
+        push_error('Failed to accept connection.')
+        # TcpListener.accept can only fail if the server forcefully shuts down
+        # while an AcceptTask is still pending. So we can safely return here.
+        return
+
+    var client := result[1] as TcpClient
     print('S> client connected')
 
     var buff := 'hello world'.to_ascii_buffer()
