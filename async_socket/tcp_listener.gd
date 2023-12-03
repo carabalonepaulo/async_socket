@@ -2,30 +2,10 @@ class_name TcpListener
 extends RefCounted
 
 
-class UID extends RefCounted:
-    var highest_index: int:
-        get: return _highest_index
-
-    var _available_indices: Array[int]
-    var _highest_index := -1
+const Slab := preload('res://async_socket/slab.gd')
 
 
-    func _init():
-        _available_indices = []
-
-
-    func get_next() -> int:
-        if _available_indices.size() > 0:
-            return _available_indices.pop_back()
-        _highest_index += 1
-        return _highest_index
-
-
-    func release(id: int) -> void:
-        _available_indices.push_back(id)
-
-
-class AcceptEvent extends RefCounted:
+class AcceptEvent extends Object:
     signal ready(value)
 
     var elapsed_time: float:
@@ -56,16 +36,13 @@ var _socket: TCPServer
 var _port: int
 var _current_event: AcceptEvent
 var _running: bool
-var _uid: UID
-var _clients: Array
+var _clients: Slab
 
 
 func _init(port: int, max_clients := 4096):
     _port = port
     _socket = TCPServer.new()
-    _uid = UID.new()
-    _clients = []
-    _clients.resize(max_clients)
+    _clients = Slab.new(max_clients)
 
 
 func start() -> void:
@@ -79,29 +56,32 @@ func stop() -> void:
 
 
 func poll() -> void:
-    if _current_event == null:
-        return
-
-    if _current_event.can_handle(_socket):
+    if _current_event != null and _current_event.can_handle(_socket):
         _current_event.handle(_socket)
+        _current_event.free()
+        _current_event = null
 
-    for i in (_uid.highest_index + 1):
-        if _clients[i] != null:
-            _clients[i].poll()
+    var client: TcpClient
+    for i in (_clients.highest_index + 1):
+        client = _clients.get_item(i)
+        if client != null:
+            client.poll()
 
 
 func accept() -> TcpClient:
     _current_event = AcceptEvent.new()
-    var client: TcpClient =  await _current_event.ready
-    client.set_meta("id", _uid.get_next())
+    var client :=  await _current_event.ready as TcpClient
+
+    var index := _clients.insert(client)
+    client.set_meta('id', index)
+
     client.disconnected.connect(_on_client_disconnected)
     client_connected.emit(client)
+
     return client
 
 
 func _on_client_disconnected(client: TcpClient) -> void:
-    var id: int = client.get_meta("id")
-    _clients[id] = null
-    _uid.release(id)
+    var id := client.get_meta('id') as int
+    _clients.remove(id)
     client_disconnected.emit(client)
-
