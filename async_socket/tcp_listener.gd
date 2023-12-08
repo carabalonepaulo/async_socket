@@ -2,9 +2,6 @@ class_name TcpListener
 extends RefCounted
 
 
-const Slab := preload('res://async_socket/slab.gd')
-
-
 class AcceptTask extends Object:
     signal ready(success, value)
 
@@ -36,13 +33,13 @@ var _socket: TCPServer
 var _port: int
 var _current_task: AcceptTask
 var _running: bool
-var _clients: Slab
+var _clients: Array
 
 
-func _init(port: int, max_clients := 4096):
+func _init(port: int):
     _port = port
     _socket = TCPServer.new()
-    _clients = Slab.new(max_clients)
+    _clients = []
 
 
 func start() -> void:
@@ -64,11 +61,8 @@ func poll() -> void:
         _current_task.free()
         _current_task = null
 
-    var client: TcpClient
-    for i in (_clients.highest_index + 1):
-        client = _clients.get_item(i)
-        if client != null:
-            client.poll()
+    for client in _clients:
+        client.poll()
 
 
 func accept() -> Array:
@@ -79,8 +73,7 @@ func accept() -> Array:
         return [FAILED]
 
     var client := result[1] as TcpClient
-    var index := _clients.insert(client)
-    client.set_meta('conn_id', index)
+    _clients.push_back(client)
 
     client.disconnected.connect(_on_client_disconnected)
     client_connected.emit(client)
@@ -89,6 +82,15 @@ func accept() -> Array:
 
 
 func _on_client_disconnected(client: TcpClient) -> void:
-    var id := client.get_meta('conn_id') as int
-    _clients.remove(id)
+    var idx := _clients.find(client)
+    var last_idx := _clients.size() - 1
+
+    var temp = _clients[last_idx]
+    _clients[last_idx] = _clients[idx]
+    _clients[idx] = temp
+
     client_disconnected.emit(client)
+
+
+func _poll_client(client: TcpClient) -> void:
+    client.poll()

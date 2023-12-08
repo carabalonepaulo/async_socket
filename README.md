@@ -7,13 +7,13 @@ Single-threaded async socket support for Godot 4.2!
 - `disconnect_from_host()` - Yep, just like the other one.
 - `poll()` - It will refresh the connection status and receive data into the internal buffer.
 - `send(buffer: PackedByteArray) -> Error` - The same as `put_data` from `StreamPeer`
-- `recv(length: int) -> Array` - Coroutine that yields when that amount of bytes is ready to be read. Returns [OK, PackedByteArray] or [FAILED].
+- `recv(length: int) -> Array[OK|FAILED, PackedByteArray?]` - Coroutine that yields when that amount of bytes is ready to be read. Returns [OK, PackedByteArray] or [FAILED].
 
 ## TcpListener
 - `start()` - Start listening.
 - `stop()` - Stop listening.
 - `poll()` - Update all connected clients.
-- `accept() -> TcpClient` - Couroutine that yields when a new connection is ready to be accepted.
+- `accept() -> Array[OK|FAILED, PackedByteArray?]` - Couroutine that yields when a new connection is ready to be accepted.
 
 ## Examples:
 ### Server
