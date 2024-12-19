@@ -18,7 +18,7 @@ Single-threaded async socket support for Godot 4.2!
 ### Server
 ```gdscript
 func _handle_server() -> void:
-    _server = AsyncSocket.TcpListener.new('0.0.0.0', 5000)
+    _server = AsyncSocket.TcpListener.new('0.0.0.0', 5000, 512)
     _server.client_connected.connect(func(client: AsyncSocket.TcpClient) -> void:
         print('S> client connected')
         var expected := 'hello world'.to_ascii_buffer()
@@ -28,11 +28,11 @@ func _handle_server() -> void:
             print('S> failed to receive data from client')
             return
         print('S> message received: %s' % (result[1] as PackedByteArray).get_string_from_ascii())
-        _client.send(result[1])
+        client.send(result[1])
         print('S> server response sent')
         print('S> waiting 1s before disconnecting client')
         await get_tree().create_timer(1).timeout
-        _client.disconnect_from_host())
+        client.disconnect_from_host())
     _server.client_disconnected.connect(func() -> void:
         print('S> client disconnected')
         _server.stop())

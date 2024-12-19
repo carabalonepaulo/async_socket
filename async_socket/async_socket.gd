@@ -104,11 +104,12 @@ class TcpListener extends RefCounted:
     var _clients: Array
 
 
-    func _init(host: String, port: int) -> void:
+    func _init(host: String, port: int, cap: int) -> void:
         _host = host
         _port = port
         _listener = TCPServer.new()
         _clients = []
+        _clients.resize(cap)
 
 
     ## Starts listening for incoming TCP connections on the specified host and port.
@@ -123,21 +124,27 @@ class TcpListener extends RefCounted:
 
     func poll() -> void:
         if _listener.is_connection_available():
-            var stream := _listener.take_connection()
-            var client := TcpClient.from_stream(stream)
-            client.disconnected.connect(func() -> void:
-                var idx := _clients.find(client)
-                var last_idx := _clients.size()
-                var temp = _clients[idx]
-                _clients[idx] = _clients[last_idx]
-                _clients[last_idx] = temp
-                _clients.resize(last_idx - 1)
-                client_disconnected.emit(client))
-            _clients.push_back(client)
-            client_connected.emit(client)
+            _accept_conn()
 
-        for c in _clients:
-            c.poll()
+        for i in _clients.size():
+            if _clients[i] != null:
+                _clients[i].poll()
+
+
+    func _accept_conn() -> void:
+        var stream := _listener.take_connection()
+        var idx := _clients.find(null)
+        if idx == -1:
+            stream.disconnect_from_host()
+            return
+
+        var client := TcpClient.from_stream(stream)
+        client.disconnected.connect(func() -> void:
+            _clients[idx] = null
+            client_disconnected.emit(client))
+
+        _clients[idx] = client
+        client_connected.emit(client)
 
 
 class Internal extends Object:
