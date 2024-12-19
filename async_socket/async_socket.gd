@@ -107,22 +107,31 @@ class TcpListener extends RefCounted:
     func _init(host: String, port: int, cap: int) -> void:
         _host = host
         _port = port
-        _listener = TCPServer.new()
         _clients = []
         _clients.resize(cap)
 
 
     ## Starts listening for incoming TCP connections on the specified host and port.
     func start() -> Error:
+        _listener = TCPServer.new()
         return _listener.listen(_port, _host)
 
 
     ## Stops listening for incoming TCP connections.
     func stop() -> void:
+        for i in _clients.size():
+            if _clients[i] == null:
+                continue
+            _clients[i].disconnect_from_host()
+            _clients[i] = null
         _listener.stop()
+        _listener = null
 
 
     func poll() -> void:
+        if _listener == null:
+            return
+
         if _listener.is_connection_available():
             _accept_conn()
 

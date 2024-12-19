@@ -1,5 +1,5 @@
-# Asynchronous Socket
-Single-threaded async socket support for Godot 4.2!
+# Async Socket
+Single-threaded async socket support for Godot 4.4!
 
 ## TcpClient
 - `static from_stream(stream: StreamPeerTCP) -> AsyncSocket.TcpClient` - Wrap a `StreamPeerTCP`.
